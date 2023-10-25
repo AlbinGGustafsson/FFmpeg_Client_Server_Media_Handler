@@ -41,7 +41,7 @@ public class TCPClientGUI {
         panel.add(updatePortField);
 
         // FFmpeg Command
-        panel.add(new JLabel("FFmpeg Command:"));
+        panel.add(new JLabel("FFmpeg Command: (%s for input and output)"));
         //Todo Här ser man att %s är en del av commandot för input och output..... Går nog att hitta en snyggare lösning
         ffmpegCommandField = new JTextField("ffmpeg -i %s -c:v libx264 -b:v 2000k -c:a aac -b:a 128k %s"); // Increased the columns to provide more visible space
         panel.add(ffmpegCommandField);

@@ -26,6 +26,7 @@ public class TCPClient extends JFrame {
         executor.submit(fileTransfer);
     }
     static class FileTransferTask implements Runnable {
+
         private String serverAddress;
         private int serverPort;
         private String filePath;

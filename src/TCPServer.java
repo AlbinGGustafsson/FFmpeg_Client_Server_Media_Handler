@@ -109,7 +109,8 @@ public class TCPServer {
             gui.removeConnection(connectionInfo, "Finished");
 
         } catch (ClassNotFoundException | IOException e) {
-            System.err.println("Something went wrong");
+
+            System.err.println("Something went wrong: " + e.getMessage());
             gui.removeConnection(connectionInfo, " Something went wrong, trying to terminate ffmpeg and delete files");
 
             if (ffmpegProcess != null && ffmpegProcess.isAlive()) {
@@ -155,7 +156,11 @@ public class TCPServer {
                 String s;
                 try {
                     while ((s = stdInput.readLine()) != null) {
-                        updateThread.sendMessage(s);
+                        if (!updateThread.sendMessage(s)){
+                            if (process.isAlive()) {
+                                process.destroy();  // Terminate the FFmpeg process
+                            }
+                        }
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -168,7 +173,11 @@ public class TCPServer {
                 String s;
                 try {
                     while ((s = stdError.readLine()) != null) {
-                        updateThread.sendMessage(s);
+                        if (!updateThread.sendMessage(s)){
+                            if (process.isAlive()) {
+                                process.destroy();  // Terminate the FFmpeg process
+                            }
+                        }
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -206,12 +215,20 @@ public class TCPServer {
             }
         }
 
-        public void sendMessage(String message) {
-            if (updateOut != null) {
-                updateOut.println(message);
-            } else {
+        public boolean sendMessage(String message) {
+            if (updateOut == null) {
                 System.err.println("Client not connected, cannot send message");
+                return false;
             }
+
+            updateOut.println(message);
+
+            if (updateOut.checkError()) {
+                System.err.println("Error sending message to client");
+                return false;
+            }
+
+            return true;
         }
     }
 

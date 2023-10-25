@@ -5,6 +5,7 @@ import java.awt.event.ActionListener;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 
 public class ServerGUI extends JFrame {
 
@@ -15,7 +16,17 @@ public class ServerGUI extends JFrame {
     private JList<ConnectionInfo> connectionList;
     private JTextArea logArea;
 
+    private ArrayList<Process> processes;
+
     public ServerGUI() {
+
+        processes = new ArrayList<>();
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            cleanUp();
+        }));
+
+
         // Set up the frame
         setTitle("TCP Server");
         setSize(600, 300);
@@ -47,6 +58,25 @@ public class ServerGUI extends JFrame {
         startButton.addActionListener(new StartServerAction());
 
         setVisible(true);
+    }
+
+    public void addProcess(Process process){
+        processes.add(process);
+    }
+
+    public void removeProcess(Process process){
+        processes.remove(process);
+    }
+
+    private void cleanUp() {
+
+        System.out.println(processes.size() + " active processes");
+
+        for (Process process : processes) {
+            if (process.isAlive()) {
+                process.destroy();
+            }
+        }
     }
 
     private class StartServerAction implements ActionListener {

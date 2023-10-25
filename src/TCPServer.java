@@ -97,7 +97,7 @@ public class TCPServer {
 
             updateServerThread.sendMessage("File process started!");
             outputFileName = "processed_" + identifier + "_" + receivedFileWrapper.getOutputFileName();
-            ffmpegProcess = executeFFmpegCommand(receivedFileName, outputFileName, updateServerThread, receivedFileWrapper.getCommand());
+            ffmpegProcess = executeFFmpegCommand(receivedFileName, outputFileName, updateServerThread, receivedFileWrapper.getCommand(), gui);
             updateServerThread.sendMessage("File process done!");
 
             File processedFile = new File(outputFileName);
@@ -135,7 +135,8 @@ public class TCPServer {
             String inputFileName,
             String outputFileName,
             UpdateServerThread updateThread,
-            String ffmpegCommand
+            String ffmpegCommand,
+            ServerGUI gui
     ) {
 
         ffmpegCommand = String.format(
@@ -149,6 +150,7 @@ public class TCPServer {
         ProcessBuilder processBuilder = new ProcessBuilder(cmdArray);
         try {
             Process process = processBuilder.start();
+            gui.addProcess(process);
 
             // Thread to read from stdout
             new Thread(() -> {
@@ -185,6 +187,7 @@ public class TCPServer {
             }).start();
 
             process.waitFor();  // Note: This line will block until the process completes.
+            gui.removeProcess(process);
             return process;  // Returning the process object here
 
         } catch (IOException | InterruptedException e) {

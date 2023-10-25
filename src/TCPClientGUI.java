@@ -3,6 +3,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 
 public class TCPClientGUI {
 
@@ -18,6 +19,7 @@ public class TCPClientGUI {
     private String filePath;
 
     public TCPClientGUI() {
+
         frame = new JFrame("TCP Client");
         frame.setSize(800, 300); // Increased size a bit for better layout
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -89,6 +91,9 @@ public class TCPClientGUI {
         frame.add(southPanel, BorderLayout.SOUTH);
         frame.setVisible(true);
     }
+
+
+
 
     private void startTCPClient() {
         // Get values from text fields

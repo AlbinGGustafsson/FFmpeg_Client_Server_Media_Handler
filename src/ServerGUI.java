@@ -2,7 +2,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 
 public class ServerGUI extends JFrame {
 
@@ -50,6 +52,14 @@ public class ServerGUI extends JFrame {
     private class StartServerAction implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
+            String ffmpegVersion = getFFmpegVersion();
+            if (ffmpegVersion == null) {
+                logMessage("ffmpeg is not installed on this computer. Please install it before starting the server.");
+                return;
+            } else {
+                logMessage("FFmpeg version installed: " + ffmpegVersion);
+            }
+
             int filePort = Integer.parseInt(filePortField.getText());
             int updatePort = Integer.parseInt(updatePortField.getText());
 
@@ -63,6 +73,22 @@ public class ServerGUI extends JFrame {
                     ex.printStackTrace();
                 }
             }).start();
+        }
+
+        private String getFFmpegVersion() {
+            try {
+                Process process = Runtime.getRuntime().exec("ffmpeg -version");
+                BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                String firstLine = reader.readLine(); // The first line of the output usually contains the version info.
+                process.waitFor();
+
+                if (process.exitValue() == 0 && firstLine != null) {
+                    return firstLine.split(" ")[2]; // Split by space and get the third item, which is typically the version.
+                }
+            } catch (Exception e) {
+                // Handle any exception that may arise during the execution.
+            }
+            return null;
         }
     }
 

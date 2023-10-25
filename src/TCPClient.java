@@ -1,67 +1,109 @@
+import javax.swing.*;
 import java.io.*;
-import java.net.*;
+import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class TCPClient {
-    public static void main(String[] args) throws IOException {
-        String serverAddress = "127.0.0.1"; // Replace with the server's IP address or hostname
-        int serverPort = 12345;
-        int updatePort = 12346;
-        String filePath = args[0]; // Replace with the path to the file you want to send
+public class TCPClient extends JFrame {
+    private JTextArea logArea;
 
-        UpdateListener updateListener = new UpdateListener(serverAddress, updatePort);
-        ExecutorService executor = Executors.newSingleThreadExecutor();
+    public TCPClient(String serverAddress, int serverPort, int updatePort, String filePath, String ffmpegCommand) throws IOException {
+        // GUI setup for log window
+        setTitle("Log Window");
+        logArea = new JTextArea(10, 70);
+        JScrollPane scrollPane = new JScrollPane(logArea);
+        add(scrollPane);
+        pack();
+        setVisible(true);
+
+        UpdateListener updateListener = new UpdateListener(serverAddress, updatePort, logArea);
+        FileTransferTask fileTransfer = new FileTransferTask(serverAddress, serverPort, filePath, logArea, ffmpegCommand);
+
+        ExecutorService executor = Executors.newCachedThreadPool();
         executor.submit(updateListener);
+        executor.submit(fileTransfer);
+    }
+    static class FileTransferTask implements Runnable {
+        private String serverAddress;
+        private int serverPort;
+        private String filePath;
+        private JTextArea logAreaReference;
 
-        try (Socket socket = new Socket(serverAddress, serverPort);
-             ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
-             ObjectInputStream in = new ObjectInputStream(socket.getInputStream())) {
+        private String ffmpegCommand;
 
+        public FileTransferTask(String serverAddress, int serverPort, String filePath, JTextArea logArea, String ffmpegCommand) {
+            this.serverAddress = serverAddress;
+            this.serverPort = serverPort;
+            this.filePath = filePath;
+            this.logAreaReference = logArea;
+            this.ffmpegCommand = ffmpegCommand;
+        }
 
-            File fileToSend = new File(filePath);
-            byte[] fileBytes = Files.readAllBytes(fileToSend.toPath());
-            FileWrapper fileWrapper = new FileWrapper(fileToSend.getName(), new String[]{"command"}, fileBytes);
-            out.writeObject(fileWrapper);
-            System.out.println("FileWrapper sent successfully.");
+        @Override
+        public void run() {
+            try (Socket socket = new Socket(serverAddress, serverPort);
+                 ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
+                 ObjectInputStream in = new ObjectInputStream(socket.getInputStream())) {
 
-            FileWrapper receivedWrapper = (FileWrapper) in.readObject();
-            String receivedFileName = "fromserver_" + receivedWrapper.getFileName();
-            Files.write(Paths.get(receivedFileName), receivedWrapper.getFileBytes());
-            System.out.println("Processed file received successfully.");
+                File fileToSend = new File(filePath);
+                byte[] fileBytes = Files.readAllBytes(fileToSend.toPath());
+                FileWrapper fileWrapper = new FileWrapper(fileToSend.getName(), ffmpegCommand, fileBytes);
+                out.writeObject(fileWrapper);
+                log("FileWrapper sent successfully.");
 
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        } finally {
-            executor.shutdownNow();
+                FileWrapper receivedWrapper = (FileWrapper) in.readObject();
+                String receivedFileName = "fromserver_" + receivedWrapper.getFileName();
+                Files.write(Paths.get(receivedFileName), receivedWrapper.getFileBytes());
+                log("Processed file received successfully.");
+
+            } catch (IOException | ClassNotFoundException e) {
+                log(e.getMessage());
+            }
+        }
+
+        private void log(String message) {
+            if (logAreaReference != null) {
+                SwingUtilities.invokeLater(() -> {
+                    logAreaReference.append(message + "\n");
+                });
+            }
         }
     }
-
 
     static class UpdateListener implements Runnable {
         private String serverAddress;
         private int updatePort;
+        private JTextArea logAreaReference;  // A reference to the logArea from TCPClient
 
-        public UpdateListener(String serverAddress, int updatePort) {
+        public UpdateListener(String serverAddress, int updatePort, JTextArea logArea) {
             this.serverAddress = serverAddress;
             this.updatePort = updatePort;
+            this.logAreaReference = logArea;  // Storing the reference
         }
 
         @Override
         public void run() {
             try (Socket updateSocket = new Socket(serverAddress, updatePort);
                  BufferedReader updateIn = new BufferedReader(new InputStreamReader(updateSocket.getInputStream()))) {
-                System.out.println("Update connection established");
+                log("Update connection established");
                 String updateMsg;
                 while ((updateMsg = updateIn.readLine()) != null) {
-                    System.out.println("Received update from server: " + updateMsg);
+                    log("Received update from server: " + updateMsg);
                 }
             } catch (IOException e) {
-                System.exit(0);
+                log(e.getMessage());
+            }
+        }
+
+        private void log(String message) {
+            // Using the logArea reference to append messages
+            if (logAreaReference != null) {
+                SwingUtilities.invokeLater(() -> {
+                    logAreaReference.append(message + "\n");
+                });
             }
         }
     }
-
 }

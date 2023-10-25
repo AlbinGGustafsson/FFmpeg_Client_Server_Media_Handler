@@ -100,7 +100,7 @@ public class TCPServer {
 
             File processedFile = new File(outputFileName);
             byte[] processedFileBytes = Files.readAllBytes(processedFile.toPath());
-            FileWrapper processedFileWrapper = new FileWrapper(processedFile.getName(), new String[]{"done command"}, processedFileBytes);
+            FileWrapper processedFileWrapper = new FileWrapper(processedFile.getName(), "done command", processedFileBytes);
             out.writeObject(processedFileWrapper);
             System.out.println("Processed file sent back to client.");
 
@@ -132,25 +132,18 @@ public class TCPServer {
             String inputFileName,
             String outputFileName,
             UpdateServerThread updateThread,
-            String[] cmd
+            String ffmpegCommand
     ) {
 
-        cmd = new String[]{
-                "ffmpeg",
-                "-i",
+        ffmpegCommand = String.format(
+                ffmpegCommand,
                 inputFileName,
-                "-c:v",
-                "libx264",
-                "-b:v",
-                "2000k",
-                "-c:a",
-                "aac",
-                "-b:a",
-                "128k",
                 outputFileName
-        };
+        );
 
-        ProcessBuilder processBuilder = new ProcessBuilder(cmd);
+        String[] cmdArray = ffmpegCommand.split(" ");
+
+        ProcessBuilder processBuilder = new ProcessBuilder(cmdArray);
         try {
             Process process = processBuilder.start();
 

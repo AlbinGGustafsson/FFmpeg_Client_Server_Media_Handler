@@ -4,10 +4,10 @@ public class FileWrapper implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private String fileName;
-    private String[] command;
+    private String command;
     private byte[] fileBytes;
 
-    public FileWrapper(String fileName, String[] command, byte[] fileBytes) {
+    public FileWrapper(String fileName, String command, byte[] fileBytes) {
         this.fileName = fileName;
         this.command = command;
         this.fileBytes = fileBytes;
@@ -18,7 +18,7 @@ public class FileWrapper implements Serializable {
         return fileName;
     }
 
-    public String[] getCommand() {
+    public String getCommand() {
         return command;
     }
 

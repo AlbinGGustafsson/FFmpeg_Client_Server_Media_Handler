@@ -9,6 +9,7 @@ import java.util.concurrent.Executors;
 
 public class TCPServer {
 
+    private static final String CACHE_DIR = "cachedFiles";
     private static final Random RANDOM = new Random();
 
     public static void startServer(int filePort, int updatePort, ServerGUI gui) throws IOException {
@@ -32,31 +33,6 @@ public class TCPServer {
         }
 
     }
-
-//    public static void main(String[] args) throws IOException {
-//        int port = 12345;
-//        int updatePort = 12346;
-//
-//        ExecutorService executor = Executors.newCachedThreadPool();
-//
-//        try (ServerSocket serverSocket = new ServerSocket(port);
-//             ServerSocket updateServerSocket = new ServerSocket(updatePort)) {
-//            System.out.println("Server listening on port " + port);
-//
-//            while (true) {
-//                try {
-//                    Socket clientSocket = serverSocket.accept();
-//                    Socket updateSocket = updateServerSocket.accept(); // Create separate update socket for each client
-//                    UpdateServerThread updateServerThread = new UpdateServerThread(updateSocket);
-//                    executor.submit(updateServerThread); // Start thread for updates
-//                    executor.submit(() -> handleClient(clientSocket, updateServerThread)); // Start thread for main client handling
-//
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//                }
-//            }
-//        }
-//    }
 
     private static String generateUniqueIdentifier() {
         String CHARACTERS = "0123456789abcdefghijklmnopqrstuvwxyz";
@@ -90,14 +66,16 @@ public class TCPServer {
             connectionInfo = new ConnectionInfo(clientSocket.getInetAddress().toString(), uniqueFileName);
             gui.addConnection(connectionInfo);
 
-            //String receivedFileName = "fromclient_" + receivedFileWrapper.getFileName();
-            receivedPath = receivedFileName;
+            // Ensure the directory exists before writing
+            ensureDirectoryExists();
+
+            receivedPath = CACHE_DIR + "/" + receivedFileName;
             Files.write(Paths.get(receivedPath), receivedFileWrapper.getFileBytes());
             System.out.println("File received and saved.");
 
             updateServerThread.sendMessage("File process started!");
-            outputFileName = "processed_" + identifier + "_" + receivedFileWrapper.getOutputFileName();
-            ffmpegProcess = executeFFmpegCommand(receivedFileName, outputFileName, updateServerThread, receivedFileWrapper.getCommand(), gui);
+            outputFileName = CACHE_DIR + "/" + "processed_" + identifier + "_" + receivedFileWrapper.getOutputFileName();
+            ffmpegProcess = executeFFmpegCommand(receivedPath, outputFileName, updateServerThread, receivedFileWrapper.getCommand(), gui);
             updateServerThread.sendMessage("File process done!");
 
             File processedFile = new File(outputFileName);
@@ -127,6 +105,13 @@ public class TCPServer {
             }
             System.out.println("Files deleted.");
 
+        }
+    }
+
+    private static void ensureDirectoryExists() {
+        File directory = new File(CACHE_DIR);
+        if (!directory.exists()) {
+            directory.mkdir();
         }
     }
 

@@ -3,6 +3,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
@@ -41,10 +42,15 @@ public class ServerGUI extends JFrame {
         connectionList = new JList<>(listModel);
         logArea = new JTextArea();
         logArea.setEditable(false);  // Make the log area uneditable
+        JButton cleanCacheButton = new JButton("Clean Cache Files");
+
+
+        cleanCacheButton.addActionListener(e -> cleanCacheFiles());
 
         // Set up the layout
         setLayout(new BorderLayout());
         JPanel topPanel = new JPanel();
+        topPanel.add(cleanCacheButton);
         topPanel.add(new JLabel("File Port:"));
         topPanel.add(filePortField);
         topPanel.add(new JLabel("Update Port:"));
@@ -69,12 +75,25 @@ public class ServerGUI extends JFrame {
     }
 
     private void cleanUp() {
-
         System.out.println(processes.size() + " active processes");
-
         for (Process process : processes) {
             if (process.isAlive()) {
                 process.destroy();
+            }
+        }
+    }
+
+
+    private void cleanCacheFiles(){
+        File cacheDir = new File("cachedFiles");
+        if (cacheDir.exists() && cacheDir.isDirectory()) {
+            for (File file : cacheDir.listFiles()) {
+                if (!file.delete()) {
+                    System.err.println("Failed to delete file: " + file.getAbsolutePath());
+                }
+            }
+            if (!cacheDir.delete()) {
+                System.err.println("Failed to delete directory: " + cacheDir.getAbsolutePath());
             }
         }
     }

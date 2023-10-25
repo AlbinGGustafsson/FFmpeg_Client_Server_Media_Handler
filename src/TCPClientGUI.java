@@ -14,7 +14,6 @@ public class TCPClientGUI {
     private JTextField ffmpegCommandField;
 
     private JTextField customOutputFileName;
-    private JTextArea logArea;
 
     private String filePath;
 

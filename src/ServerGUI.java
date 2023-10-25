@@ -116,7 +116,8 @@ public class ServerGUI extends JFrame {
             new Thread(() -> {
                 try {
                     logMessage("Server started on file port " + filePort + " and update port " + updatePort);
-                    TCPServer.startServer(filePort, updatePort, ServerGUI.this);
+                    TCPServer server = new TCPServer(ServerGUI.this);
+                    server.start(filePort, updatePort);
                 } catch (IOException ex) {
                     logMessage("Failed to start server: " + ex.getMessage());
                     ex.printStackTrace();

@@ -12,7 +12,7 @@ public class TCPClient extends JFrame {
     public TCPClient(String serverAddress, int serverPort, int updatePort, String filePath, String ffmpegCommand) throws IOException {
         // GUI setup for log window
         setTitle("Log Window");
-        logArea = new JTextArea(10, 70);
+        logArea = new JTextArea(20, 50);
         JScrollPane scrollPane = new JScrollPane(logArea);
         add(scrollPane);
         pack();

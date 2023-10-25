@@ -59,7 +59,7 @@ public class TCPClient {
                     System.out.println("Received update from server: " + updateMsg);
                 }
             } catch (IOException e) {
-                e.printStackTrace();
+                System.exit(0);
             }
         }
     }

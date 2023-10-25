@@ -82,7 +82,9 @@ public class TCPServer {
 
             FileWrapper receivedFileWrapper = (FileWrapper) in.readObject();
 
-            String uniqueFileName = generateUniqueIdentifier() + "_" + receivedFileWrapper.getFileName();
+            String identifier = generateUniqueIdentifier();
+
+            String uniqueFileName = identifier + "_" + receivedFileWrapper.getFileName();
             String receivedFileName = "fromclient_" + uniqueFileName;
 
             connectionInfo = new ConnectionInfo(clientSocket.getInetAddress().toString(), uniqueFileName);
@@ -94,13 +96,13 @@ public class TCPServer {
             System.out.println("File received and saved.");
 
             updateServerThread.sendMessage("File process started!");
-            outputFileName = "processed_" + uniqueFileName;
+            outputFileName = "processed_" + identifier + "_" + receivedFileWrapper.getOutputFileName();
             ffmpegProcess = executeFFmpegCommand(receivedFileName, outputFileName, updateServerThread, receivedFileWrapper.getCommand());
             updateServerThread.sendMessage("File process done!");
 
             File processedFile = new File(outputFileName);
             byte[] processedFileBytes = Files.readAllBytes(processedFile.toPath());
-            FileWrapper processedFileWrapper = new FileWrapper(processedFile.getName(), "done command", processedFileBytes);
+            FileWrapper processedFileWrapper = new FileWrapper(processedFile.getName(), "done command", processedFileBytes, "none");
             out.writeObject(processedFileWrapper);
             System.out.println("Processed file sent back to client.");
 

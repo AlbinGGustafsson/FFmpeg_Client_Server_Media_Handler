@@ -5,17 +5,24 @@ public class FileWrapper implements Serializable {
 
     private String fileName;
     private String command;
+
+    private String outputFileName;
     private byte[] fileBytes;
 
-    public FileWrapper(String fileName, String command, byte[] fileBytes) {
+    public FileWrapper(String fileName, String command, byte[] fileBytes, String outputFileName) {
         this.fileName = fileName;
         this.command = command;
         this.fileBytes = fileBytes;
+        this.outputFileName = outputFileName;
     }
 
     // Getters and setters here
     public String getFileName() {
         return fileName;
+    }
+
+    public String getOutputFileName(){
+        return outputFileName;
     }
 
     public String getCommand() {

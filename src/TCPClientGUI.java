@@ -11,6 +11,8 @@ public class TCPClientGUI {
     private JTextField serverPortField;
     private JTextField updatePortField;
     private JTextField ffmpegCommandField;
+
+    private JTextField customOutputFileName;
     private JTextArea logArea;
 
     private String filePath;
@@ -21,7 +23,7 @@ public class TCPClientGUI {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         JPanel panel = new JPanel();
-        panel.setLayout(new GridLayout(5, 2));
+        panel.setLayout(new GridLayout(6, 2));
 
         // Server Address
         panel.add(new JLabel("Server Address:"));
@@ -40,8 +42,14 @@ public class TCPClientGUI {
 
         // FFmpeg Command
         panel.add(new JLabel("FFmpeg Command:"));
+        //Todo Här ser man att %s är en del av commandot för input och output..... Går nog att hitta en snyggare lösning
         ffmpegCommandField = new JTextField("ffmpeg -i %s -c:v libx264 -b:v 2000k -c:a aac -b:a 128k %s"); // Increased the columns to provide more visible space
         panel.add(ffmpegCommandField);
+
+        panel.add(new JLabel("Output filename (will include identifier)"));
+        customOutputFileName = new JTextField("");
+        panel.add(customOutputFileName);
+
 
         JLabel filePathLabel = new JLabel("File name");
         panel.add(filePathLabel);
@@ -64,6 +72,7 @@ public class TCPClientGUI {
                 if (returnValue == JFileChooser.APPROVE_OPTION) {
                     filePath = fileChooser.getSelectedFile().getAbsolutePath();
                     filePathLabel.setText(fileChooser.getSelectedFile().getName());
+                    customOutputFileName.setText(fileChooser.getSelectedFile().getName());
                     startButton.setEnabled(true); // Enable the button when a file is chosen
                 }
             }
@@ -87,9 +96,10 @@ public class TCPClientGUI {
         int serverPort = Integer.parseInt(serverPortField.getText());
         int updatePort = Integer.parseInt(updatePortField.getText());
         String ffmpegCommand = ffmpegCommandField.getText();
+        String outputFileName = customOutputFileName.getText();
 
         try {
-            new TCPClient(serverAddress, serverPort, updatePort, filePath, ffmpegCommand);
+            new TCPClient(serverAddress, serverPort, updatePort, filePath, ffmpegCommand, outputFileName);
         } catch (IOException e) {
             JOptionPane.showMessageDialog(frame, "Error starting TCP Client: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }

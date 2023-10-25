@@ -9,7 +9,7 @@ import java.util.concurrent.Executors;
 public class TCPClient extends JFrame {
     private JTextArea logArea;
 
-    public TCPClient(String serverAddress, int serverPort, int updatePort, String filePath, String ffmpegCommand) throws IOException {
+    public TCPClient(String serverAddress, int serverPort, int updatePort, String filePath, String ffmpegCommand, String outputFileName) throws IOException {
         // GUI setup for log window
         setTitle("Log Window");
         logArea = new JTextArea(20, 50);
@@ -19,7 +19,7 @@ public class TCPClient extends JFrame {
         setVisible(true);
 
         UpdateListener updateListener = new UpdateListener(serverAddress, updatePort, logArea);
-        FileTransferTask fileTransfer = new FileTransferTask(serverAddress, serverPort, filePath, logArea, ffmpegCommand);
+        FileTransferTask fileTransfer = new FileTransferTask(serverAddress, serverPort, filePath, logArea, ffmpegCommand, outputFileName);
 
         ExecutorService executor = Executors.newCachedThreadPool();
         executor.submit(updateListener);
@@ -29,16 +29,19 @@ public class TCPClient extends JFrame {
         private String serverAddress;
         private int serverPort;
         private String filePath;
+
+        private String outputFileName;
         private JTextArea logAreaReference;
 
         private String ffmpegCommand;
 
-        public FileTransferTask(String serverAddress, int serverPort, String filePath, JTextArea logArea, String ffmpegCommand) {
+        public FileTransferTask(String serverAddress, int serverPort, String filePath, JTextArea logArea, String ffmpegCommand, String outputFileName) {
             this.serverAddress = serverAddress;
             this.serverPort = serverPort;
             this.filePath = filePath;
             this.logAreaReference = logArea;
             this.ffmpegCommand = ffmpegCommand;
+            this.outputFileName = outputFileName;
         }
 
         @Override
@@ -49,7 +52,7 @@ public class TCPClient extends JFrame {
 
                 File fileToSend = new File(filePath);
                 byte[] fileBytes = Files.readAllBytes(fileToSend.toPath());
-                FileWrapper fileWrapper = new FileWrapper(fileToSend.getName(), ffmpegCommand, fileBytes);
+                FileWrapper fileWrapper = new FileWrapper(fileToSend.getName(), ffmpegCommand, fileBytes, outputFileName);
                 out.writeObject(fileWrapper);
                 log("FileWrapper sent successfully.");
 

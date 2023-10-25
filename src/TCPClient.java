@@ -5,12 +5,16 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 public class TCPClient extends JFrame {
     private JTextArea logArea;
 
+    private FileTransferTask fileTransfer;
+    private UpdateListener updateListener;
+
     public TCPClient(String serverAddress, int serverPort, int updatePort, String filePath, String ffmpegCommand, String outputFileName) throws IOException {
-        // GUI setup for log window
         setTitle("Log Window");
         logArea = new JTextArea(20, 50);
         JScrollPane scrollPane = new JScrollPane(logArea);
@@ -18,23 +22,31 @@ public class TCPClient extends JFrame {
         pack();
         setVisible(true);
 
-        UpdateListener updateListener = new UpdateListener(serverAddress, updatePort, logArea);
-        FileTransferTask fileTransfer = new FileTransferTask(serverAddress, serverPort, filePath, logArea, ffmpegCommand, outputFileName);
+        updateListener = new UpdateListener(serverAddress, updatePort, logArea);
+        fileTransfer = new FileTransferTask(serverAddress, serverPort, filePath, logArea, ffmpegCommand, outputFileName);
+
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                updateListener.close();
+                fileTransfer.close();
+            }
+        });
 
         ExecutorService executor = Executors.newCachedThreadPool();
         executor.submit(updateListener);
         executor.submit(fileTransfer);
     }
-    static class FileTransferTask implements Runnable {
 
+    static class FileTransferTask implements Runnable {
         private String serverAddress;
         private int serverPort;
         private String filePath;
-
         private String outputFileName;
         private JTextArea logAreaReference;
-
         private String ffmpegCommand;
+
+        private Socket socket;
 
         public FileTransferTask(String serverAddress, int serverPort, String filePath, JTextArea logArea, String ffmpegCommand, String outputFileName) {
             this.serverAddress = serverAddress;
@@ -47,23 +59,38 @@ public class TCPClient extends JFrame {
 
         @Override
         public void run() {
-            try (Socket socket = new Socket(serverAddress, serverPort);
-                 ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
-                 ObjectInputStream in = new ObjectInputStream(socket.getInputStream())) {
+            try {
+                socket = new Socket(serverAddress, serverPort);
 
-                File fileToSend = new File(filePath);
-                byte[] fileBytes = Files.readAllBytes(fileToSend.toPath());
-                FileWrapper fileWrapper = new FileWrapper(fileToSend.getName(), ffmpegCommand, fileBytes, outputFileName);
-                out.writeObject(fileWrapper);
-                log("FileWrapper sent successfully.");
+                try (ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
+                     ObjectInputStream in = new ObjectInputStream(socket.getInputStream())) {
 
-                FileWrapper receivedWrapper = (FileWrapper) in.readObject();
-                String receivedFileName = "fromserver_" + receivedWrapper.getFileName();
-                Files.write(Paths.get(receivedFileName), receivedWrapper.getFileBytes());
-                log("Processed file received successfully.");
+                    File fileToSend = new File(filePath);
+                    byte[] fileBytes = Files.readAllBytes(fileToSend.toPath());
+                    FileWrapper fileWrapper = new FileWrapper(fileToSend.getName(), ffmpegCommand, fileBytes, outputFileName);
+                    out.writeObject(fileWrapper);
+                    log("FileWrapper sent successfully.");
 
-            } catch (IOException | ClassNotFoundException e) {
+                    FileWrapper receivedWrapper = (FileWrapper) in.readObject();
+                    String receivedFileName = "fromserver_" + receivedWrapper.getFileName();
+                    Files.write(Paths.get(receivedFileName), receivedWrapper.getFileBytes());
+                    log("Processed file received successfully.");
+
+                } catch (IOException | ClassNotFoundException e) {
+                    log(e.getMessage());
+                }
+            } catch (IOException e) {
                 log(e.getMessage());
+            }
+        }
+
+        public void close() {
+            if (socket != null && !socket.isClosed()) {
+                try {
+                    socket.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
 
@@ -79,30 +106,46 @@ public class TCPClient extends JFrame {
     static class UpdateListener implements Runnable {
         private String serverAddress;
         private int updatePort;
-        private JTextArea logAreaReference;  // A reference to the logArea from TCPClient
+        private JTextArea logAreaReference;
+
+        private Socket updateSocket;
 
         public UpdateListener(String serverAddress, int updatePort, JTextArea logArea) {
             this.serverAddress = serverAddress;
             this.updatePort = updatePort;
-            this.logAreaReference = logArea;  // Storing the reference
+            this.logAreaReference = logArea;
         }
 
         @Override
         public void run() {
-            try (Socket updateSocket = new Socket(serverAddress, updatePort);
-                 BufferedReader updateIn = new BufferedReader(new InputStreamReader(updateSocket.getInputStream()))) {
-                log("Update connection established");
-                String updateMsg;
-                while ((updateMsg = updateIn.readLine()) != null) {
-                    log("Received update from server: " + updateMsg);
+            try {
+                updateSocket = new Socket(serverAddress, updatePort);
+
+                try (BufferedReader updateIn = new BufferedReader(new InputStreamReader(updateSocket.getInputStream()))) {
+                    log("Update connection established");
+                    String updateMsg;
+                    while ((updateMsg = updateIn.readLine()) != null) {
+                        log("Received update from server: " + updateMsg);
+                    }
+                } catch (IOException e) {
+                    log(e.getMessage());
                 }
             } catch (IOException e) {
                 log(e.getMessage());
             }
         }
 
+        public void close() {
+            if (updateSocket != null && !updateSocket.isClosed()) {
+                try {
+                    updateSocket.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
         private void log(String message) {
-            // Using the logArea reference to append messages
             if (logAreaReference != null) {
                 SwingUtilities.invokeLater(() -> {
                     logAreaReference.append(message + "\n");

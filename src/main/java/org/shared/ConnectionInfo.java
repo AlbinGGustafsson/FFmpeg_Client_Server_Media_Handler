@@ -1,3 +1,5 @@
+package org.shared;
+
 import java.util.Objects;
 
 public class ConnectionInfo {

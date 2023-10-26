@@ -1,3 +1,7 @@
+package org.client;
+
+import org.shared.FileWrapper;
+
 import javax.swing.*;
 import java.io.*;
 import java.net.Socket;
@@ -69,7 +73,7 @@ public class TCPClient extends JFrame {
                     byte[] fileBytes = Files.readAllBytes(fileToSend.toPath());
                     FileWrapper fileWrapper = new FileWrapper(fileToSend.getName(), ffmpegCommand, fileBytes, outputFileName);
                     out.writeObject(fileWrapper);
-                    log("FileWrapper sent successfully.");
+                    log("org.shared.FileWrapper sent successfully.");
 
                     FileWrapper receivedWrapper = (FileWrapper) in.readObject();
                     String receivedFileName = "fromserver_" + receivedWrapper.getFileName();

@@ -1,3 +1,5 @@
+package org.shared;
+
 import java.io.Serializable;
 
 public class FileWrapper implements Serializable {

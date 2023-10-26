@@ -1,3 +1,8 @@
+package org.server;
+
+import org.shared.ConnectionInfo;
+import org.shared.SQliteManager;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -157,7 +162,15 @@ public class ServerGUI extends JFrame {
         SwingUtilities.invokeLater(() -> logArea.append(message + "\n"));
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
+
+        if(args.length < 1) {
+            System.out.println("Please provide the encryption key as an argument.");
+            System.exit(1);
+        }
+        String encryptionKey = args[0];
+        SQliteManager manager = new SQliteManager(encryptionKey);
+
         new ServerGUI();
     }
 }

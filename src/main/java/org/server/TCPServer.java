@@ -1,3 +1,8 @@
+package org.server;
+
+import org.shared.ConnectionInfo;
+import org.shared.FileWrapper;
+
 import java.io.*;
 import java.net.*;
 import java.nio.file.*;

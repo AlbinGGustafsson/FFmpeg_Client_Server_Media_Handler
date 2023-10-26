@@ -22,13 +22,11 @@ public class DatabaseWindow {
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         frame.setLayout(new BorderLayout());
 
-        // Create components
         getJobsButton = new JButton("Get Jobs");
         ipTextField = new JTextField(15);
         textArea = new JTextArea();
         JScrollPane scrollPane = new JScrollPane(textArea);
 
-        // Set up action for the button
         getJobsButton.addActionListener(e -> {
             textArea.append("Fetched jobs for IP: " + ipTextField.getText() + "\n");
             ArrayList<String> jobs;
@@ -46,13 +44,11 @@ public class DatabaseWindow {
             }
         });
 
-        // Create a panel for the top components
         JPanel topPanel = new JPanel();
         topPanel.add(new JLabel("IP Address:"));
         topPanel.add(ipTextField);
         topPanel.add(getJobsButton);
 
-        // Add components to the frame
         frame.add(topPanel, BorderLayout.NORTH);
         frame.add(scrollPane, BorderLayout.CENTER);
     }

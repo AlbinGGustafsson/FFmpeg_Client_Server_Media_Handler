@@ -18,7 +18,7 @@ public class TCPClient extends JFrame {
     private FileTransferTask fileTransfer;
     private UpdateListener updateListener;
 
-    public TCPClient(String serverAddress, int serverPort, int updatePort, String filePath, String ffmpegCommand, String outputFileName) throws IOException {
+    public TCPClient(String serverAddress, int serverPort, int updatePort, String filePath, String ffmpegCommand, String outputFileName, String password) throws IOException {
         setTitle("Log Window");
         logArea = new JTextArea(20, 50);
         JScrollPane scrollPane = new JScrollPane(logArea);
@@ -27,7 +27,7 @@ public class TCPClient extends JFrame {
         setVisible(true);
 
         updateListener = new UpdateListener(serverAddress, updatePort, logArea);
-        fileTransfer = new FileTransferTask(serverAddress, serverPort, filePath, logArea, ffmpegCommand, outputFileName);
+        fileTransfer = new FileTransferTask(serverAddress, serverPort, filePath, logArea, ffmpegCommand, outputFileName, password);
 
         addWindowListener(new WindowAdapter() {
             @Override
@@ -50,15 +50,17 @@ public class TCPClient extends JFrame {
         private JTextArea logAreaReference;
         private String ffmpegCommand;
 
+        private String password;
         private Socket socket;
 
-        public FileTransferTask(String serverAddress, int serverPort, String filePath, JTextArea logArea, String ffmpegCommand, String outputFileName) {
+        public FileTransferTask(String serverAddress, int serverPort, String filePath, JTextArea logArea, String ffmpegCommand, String outputFileName, String password) {
             this.serverAddress = serverAddress;
             this.serverPort = serverPort;
             this.filePath = filePath;
             this.logAreaReference = logArea;
             this.ffmpegCommand = ffmpegCommand;
             this.outputFileName = outputFileName;
+            this.password = password;
         }
 
         @Override
@@ -71,7 +73,7 @@ public class TCPClient extends JFrame {
 
                     File fileToSend = new File(filePath);
                     byte[] fileBytes = Files.readAllBytes(fileToSend.toPath());
-                    FileWrapper fileWrapper = new FileWrapper(fileToSend.getName(), ffmpegCommand, fileBytes, outputFileName);
+                    FileWrapper fileWrapper = new FileWrapper(fileToSend.getName(), ffmpegCommand, fileBytes, outputFileName, password);
                     out.writeObject(fileWrapper);
                     log("org.shared.FileWrapper sent successfully.");
 

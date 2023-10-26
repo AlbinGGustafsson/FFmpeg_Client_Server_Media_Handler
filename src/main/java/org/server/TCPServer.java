@@ -76,12 +76,20 @@ public class TCPServer {
 
                 FileWrapper receivedFileWrapper = (FileWrapper) in.readObject();
 
+                String ipAdress = clientSocket.getInetAddress().getHostAddress();
+                String password = receivedFileWrapper.getPassword();
+
+                if (!dbManager.verifyClientPassword(ipAdress, password)){
+                    updateServerThread.sendMessage("Incorrect password!");
+                     return;
+                }
+                updateServerThread.sendMessage("Correct password!");
+
                 String identifier = generateUniqueIdentifier();
 
                 String uniqueFileName = identifier + "_" + receivedFileWrapper.getFileName();
                 String receivedFileName = "fromclient_" + uniqueFileName;
 
-                String ipAdress = clientSocket.getInetAddress().getHostAddress();
 
                 connectionInfo = new ConnectionInfo(ipAdress, uniqueFileName);
                 gui.addConnection(connectionInfo);
@@ -103,7 +111,7 @@ public class TCPServer {
 
                 File processedFile = new File(outputFileName);
                 byte[] processedFileBytes = Files.readAllBytes(processedFile.toPath());
-                FileWrapper processedFileWrapper = new FileWrapper(processedFile.getName(), "done command", processedFileBytes, "none");
+                FileWrapper processedFileWrapper = new FileWrapper(processedFile.getName(), "done command", processedFileBytes, "none", "none");
                 out.writeObject(processedFileWrapper);
                 System.out.println("Processed file sent back to client.");
 
@@ -123,7 +131,6 @@ public class TCPServer {
                 System.err.println("Could not write to database");
             } finally {
                 // Delete the received and processed files
-
                 try {
                     Files.deleteIfExists(Paths.get(receivedPath));
                     Files.deleteIfExists(Paths.get(outputFileName));
@@ -212,13 +219,13 @@ public class TCPServer {
                     }
                 }).start();
 
-                process.waitFor();  // Note: This line will block until the process completes.
+                process.waitFor();
                 gui.removeProcess(process);
-                return process;  // Returning the process object here
+                return process;
 
             } catch (IOException | InterruptedException e) {
                 e.printStackTrace();
-                return null;  // Return null or handle the exception in a way that's appropriate for your application.
+                return null;
             }
         }
     }

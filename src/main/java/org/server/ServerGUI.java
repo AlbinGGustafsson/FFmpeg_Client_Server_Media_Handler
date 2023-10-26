@@ -31,7 +31,7 @@ public class ServerGUI extends JFrame {
 
     /**
      * Konstruktor för ServerGUI-klassen.
-     * Sätter upp gränsnsittet.
+     * Sätter upp gränssnittet.
      */
     public ServerGUI() {
 

@@ -71,11 +71,13 @@ public class TCPClient extends JFrame {
                 try (ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
                      ObjectInputStream in = new ObjectInputStream(socket.getInputStream())) {
 
+                    out.writeObject(password);
+
                     File fileToSend = new File(filePath);
                     byte[] fileBytes = Files.readAllBytes(fileToSend.toPath());
-                    FileWrapper fileWrapper = new FileWrapper(fileToSend.getName(), ffmpegCommand, fileBytes, outputFileName, password);
+                    FileWrapper fileWrapper = new FileWrapper(fileToSend.getName(), ffmpegCommand, fileBytes, outputFileName);
                     out.writeObject(fileWrapper);
-                    log("org.shared.FileWrapper sent successfully.");
+                    log("File sent successfully.");
 
                     FileWrapper receivedWrapper = (FileWrapper) in.readObject();
                     String receivedFileName = "fromserver_" + receivedWrapper.getFileName();

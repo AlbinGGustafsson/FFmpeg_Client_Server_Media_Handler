@@ -13,12 +13,11 @@ public class FileWrapper implements Serializable {
 
     private String password;
 
-    public FileWrapper(String fileName, String command, byte[] fileBytes, String outputFileName, String password) {
+    public FileWrapper(String fileName, String command, byte[] fileBytes, String outputFileName) {
         this.fileName = fileName;
         this.command = command;
         this.fileBytes = fileBytes;
         this.outputFileName = outputFileName;
-        this.password = password;
     }
 
     // Getters and setters here
@@ -36,9 +35,5 @@ public class FileWrapper implements Serializable {
 
     public byte[] getFileBytes() {
         return fileBytes;
-    }
-
-    public String getPassword() {
-        return password;
     }
 }

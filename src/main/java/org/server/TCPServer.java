@@ -72,18 +72,24 @@ public class TCPServer {
             try (ObjectInputStream in = new ObjectInputStream(clientSocket.getInputStream());
                  ObjectOutputStream out = new ObjectOutputStream(clientSocket.getOutputStream())) {
 
+
+                System.out.println("Client connected");
+
+                // First, read the password
+                String password = (String) in.readObject();
+
+                String ipAdress = clientSocket.getInetAddress().getHostAddress();
+
+                if (!dbManager.verifyClientPassword(ipAdress, password)){
+                    updateServerThread.sendMessage("Incorrect password");
+                    return;
+                }
+                updateServerThread.sendMessage("Correct password");
+
+
                 System.out.println("Client connected");
 
                 FileWrapper receivedFileWrapper = (FileWrapper) in.readObject();
-
-                String ipAdress = clientSocket.getInetAddress().getHostAddress();
-                String password = receivedFileWrapper.getPassword();
-
-                if (!dbManager.verifyClientPassword(ipAdress, password)){
-                    updateServerThread.sendMessage("Incorrect password!");
-                     return;
-                }
-                updateServerThread.sendMessage("Correct password!");
 
                 String identifier = generateUniqueIdentifier();
 
@@ -111,7 +117,7 @@ public class TCPServer {
 
                 File processedFile = new File(outputFileName);
                 byte[] processedFileBytes = Files.readAllBytes(processedFile.toPath());
-                FileWrapper processedFileWrapper = new FileWrapper(processedFile.getName(), "done command", processedFileBytes, "none", "none");
+                FileWrapper processedFileWrapper = new FileWrapper(processedFile.getName(), "done command", processedFileBytes, "none");
                 out.writeObject(processedFileWrapper);
                 System.out.println("Processed file sent back to client.");
 

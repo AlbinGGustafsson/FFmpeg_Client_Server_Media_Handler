@@ -20,19 +20,20 @@ public class SQliteManager {
     private void initDatabase() throws SQLException {
         try (Connection conn = DriverManager.getConnection(url);
              Statement stmt = conn.createStatement()) {
-            // Create jobs table
-            stmt.execute("CREATE TABLE IF NOT EXISTS jobs (id INTEGER PRIMARY KEY, filename TEXT, ip TEXT, time TEXT)");
+            // Create jobs table with a 'status' column
+            stmt.execute("CREATE TABLE IF NOT EXISTS jobs (id INTEGER PRIMARY KEY, filename TEXT, ip TEXT, time TEXT, status TEXT)");
             // Create clients table
             stmt.execute("CREATE TABLE IF NOT EXISTS clients (ip TEXT PRIMARY KEY, password TEXT)");
         }
     }
 
-    public void addJob(String filename, String ip, String time) throws SQLException {
+    public void addJob(String filename, String ip, String time, JobStatus status) throws SQLException {
         try (Connection conn = DriverManager.getConnection(url);
-             PreparedStatement pstmt = conn.prepareStatement("INSERT INTO jobs(filename, ip, time) VALUES(?, ?, ?)")) {
+             PreparedStatement pstmt = conn.prepareStatement("INSERT INTO jobs(filename, ip, time, status) VALUES(?, ?, ?, ?)")) {
             pstmt.setString(1, filename);
             pstmt.setString(2, ip);
             pstmt.setString(3, time);
+            pstmt.setString(4, status.name());
             pstmt.executeUpdate();
         }
     }
@@ -58,14 +59,13 @@ public class SQliteManager {
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    String jobDetail = "ID: " + rs.getInt("id") + ", Filename: " + rs.getString("filename") + ", IP: " + rs.getString("ip") + ", Time: " + rs.getString("time");
+                    String jobDetail = "ID: " + rs.getInt("id") + ", Filename: " + rs.getString("filename") + ", IP: " + rs.getString("ip") + ", Time: " + rs.getString("time") + ", Status: " + rs.getString("status");
                     jobs.add(jobDetail);
                 }
             }
         }
         return jobs;
     }
-
 
 
     public void addClientPassword(String ip, String password) throws Exception {

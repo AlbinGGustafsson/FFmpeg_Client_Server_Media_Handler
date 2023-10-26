@@ -15,6 +15,7 @@ import java.util.ArrayList;
 
 public class ServerGUI extends JFrame {
 
+    private static SQliteManager manager;
     private JTextField filePortField;
     private JTextField updatePortField;
     private JButton startButton;
@@ -121,7 +122,7 @@ public class ServerGUI extends JFrame {
             new Thread(() -> {
                 try {
                     logMessage("Server started on file port " + filePort + " and update port " + updatePort);
-                    TCPServer server = new TCPServer(ServerGUI.this);
+                    TCPServer server = new TCPServer(ServerGUI.this, manager);
                     server.start(filePort, updatePort);
                 } catch (IOException ex) {
                     logMessage("Failed to start server: " + ex.getMessage());
@@ -169,7 +170,7 @@ public class ServerGUI extends JFrame {
             System.exit(1);
         }
         String encryptionKey = args[0];
-        SQliteManager manager = new SQliteManager(encryptionKey);
+        manager = new SQliteManager(encryptionKey);
 
         new ServerGUI();
     }

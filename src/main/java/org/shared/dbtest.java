@@ -8,9 +8,10 @@ public class dbtest {
     public static void main(String[] args) throws Exception {
 
         SQliteManager sQliteManager = new SQliteManager("key");
-//        sQliteManager.addJob("movie.mp4", "127.0.0.1", LocalDateTime.now().toString());
-//        sQliteManager.addJob("movie2.mp4", "127.0.0.2", LocalDateTime.now().toString());
-//        sQliteManager.addJob("movie3.mp4", "127.0.0.3", LocalDateTime.now().toString());
+        sQliteManager.addJob("movie.mp4", "127.0.0.1", LocalDateTime.now().toString(), JobStatus.STARTED);
+        sQliteManager.addJob("movie2.mp4", "127.0.0.2", LocalDateTime.now().toString(), JobStatus.STARTED);
+        sQliteManager.addJob("movie3.mp4", "127.0.0.3", LocalDateTime.now().toString(), JobStatus.STARTED);
+        sQliteManager.addJob("movie.mp4", "127.0.0.1", LocalDateTime.now().toString(), JobStatus.FINISHED);
 
         String originalPassword = "superSecret123";
         //sQliteManager.addClientPassword("127.0.0.1", originalPassword);

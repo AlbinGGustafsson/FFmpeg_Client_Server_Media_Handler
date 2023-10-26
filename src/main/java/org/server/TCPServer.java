@@ -2,10 +2,14 @@ package org.server;
 
 import org.shared.ConnectionInfo;
 import org.shared.FileWrapper;
+import org.shared.JobStatus;
+import org.shared.SQliteManager;
 
 import java.io.*;
 import java.net.*;
 import java.nio.file.*;
+import java.sql.SQLException;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -18,8 +22,11 @@ public class TCPServer {
     private final ServerGUI gui;
     private final Random random = new Random();
 
-    public TCPServer(ServerGUI gui) {
+    private SQliteManager dbManager;
+
+    public TCPServer(ServerGUI gui, SQliteManager dbManager) {
         this.gui = gui;
+        this.dbManager = dbManager;
         this.executor = Executors.newCachedThreadPool();
     }
 
@@ -74,8 +81,13 @@ public class TCPServer {
                 String uniqueFileName = identifier + "_" + receivedFileWrapper.getFileName();
                 String receivedFileName = "fromclient_" + uniqueFileName;
 
-                connectionInfo = new ConnectionInfo(clientSocket.getInetAddress().toString(), uniqueFileName);
+                String ipAdress = clientSocket.getInetAddress().getHostAddress();
+
+                connectionInfo = new ConnectionInfo(ipAdress, uniqueFileName);
                 gui.addConnection(connectionInfo);
+
+                //Lägger till jobbet i databasen
+                dbManager.addJob(uniqueFileName, ipAdress, LocalDateTime.now().toString(), JobStatus.STARTED);
 
                 // Ensure the directory exists before writing
                 ensureDirectoryExists();
@@ -96,6 +108,7 @@ public class TCPServer {
                 System.out.println("Processed file sent back to client.");
 
                 gui.removeConnection(connectionInfo, "Finished");
+                dbManager.addJob(uniqueFileName, ipAdress, LocalDateTime.now().toString(), JobStatus.FINISHED);
 
             } catch (ClassNotFoundException | IOException e) {
 
@@ -106,8 +119,11 @@ public class TCPServer {
                     ffmpegProcess.destroy();  // Terminate the FFmpeg process
                 }
 
+            } catch (SQLException e) {
+                System.err.println("Could not write to database");
             } finally {
                 // Delete the received and processed files
+
                 try {
                     Files.deleteIfExists(Paths.get(receivedPath));
                     Files.deleteIfExists(Paths.get(outputFileName));

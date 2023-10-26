@@ -53,6 +53,10 @@ public class ServerGUI extends JFrame {
         JButton databaseButton = new JButton("Database");
 
 
+        databaseButton.addActionListener(e -> {
+            new DatabaseWindow(manager).show();
+        });
+
         addPasswordButton.addActionListener(e -> {
 
             AddPasswordDialog dialog = new AddPasswordDialog(this); // Replace 'yourMainFrameInstance' with the instance of your JFrame

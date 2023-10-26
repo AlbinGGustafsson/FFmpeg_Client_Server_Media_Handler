@@ -95,13 +95,20 @@ public class SQliteManager {
     }
 
     public boolean verifyClientPassword(String ip, String providedPassword) throws Exception {
+        String masterEncryptedPassword = getStoredPassword("master");
+        String encryptedProvidedPassword = encryptPassword(providedPassword);
+
+        // Check against master password
+        if (masterEncryptedPassword != null && masterEncryptedPassword.equals(encryptedProvidedPassword)) {
+            return true;
+        }
+
+        // If not master, check the password for the specific IP
         String storedEncryptedPassword = getStoredPassword(ip);
         if (storedEncryptedPassword == null) {
             // No password stored for this IP
             return false;
         }
-
-        String encryptedProvidedPassword = encryptPassword(providedPassword);
 
         return storedEncryptedPassword.equals(encryptedProvidedPassword);
     }

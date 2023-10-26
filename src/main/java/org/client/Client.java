@@ -12,13 +12,29 @@ import java.util.concurrent.Executors;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
-public class TCPClient extends JFrame {
+/**
+ * Klientklass för att skicka filer och lyssna på uppdateringar från servern.
+ * Det är också ett swing fönster för ett "jobb" och innehåller en log-ruta.
+ */
+public class Client extends JFrame {
     private JTextArea logArea;
-
     private FileTransferTask fileTransfer;
     private UpdateListener updateListener;
 
-    public TCPClient(String serverAddress, int serverPort, int updatePort, String filePath, String ffmpegCommand, String outputFileName, String password) throws IOException {
+    /**
+     * Konstruktor för Client-klassen.
+     * Skapar en FileTransferTask för att påbörja uppladdning/hantering/nedladdning.
+     *
+     * @param serverAddress    Serveradressen dit filen ska skickas.
+     * @param serverPort       Porten som används för att kommunicera med servern.
+     * @param updatePort       Porten för att lyssna på uppdateringar från servern.
+     * @param filePath         Sökvägen till den fil som ska skickas.
+     * @param ffmpegCommand    FFmpeg-kommandot som ska användas för filbehandling.
+     * @param outputFileName   Namnet på den resulterande filen efter behandling.
+     * @param password         Lösenordet som används för autentisering.
+     * @throws IOException     Kastas om det uppstår ett IO-fel.
+     */
+    public Client(String serverAddress, int serverPort, int updatePort, String filePath, String ffmpegCommand, String outputFileName, String password) throws IOException {
         setTitle("Log Window");
         logArea = new JTextArea(20, 50);
         JScrollPane scrollPane = new JScrollPane(logArea);
@@ -42,6 +58,9 @@ public class TCPClient extends JFrame {
         executor.submit(fileTransfer);
     }
 
+    /**
+     * En inre klass som hanterar filöverföringen till servern.
+     */
     static class FileTransferTask implements Runnable {
         private String serverAddress;
         private int serverPort;
@@ -53,6 +72,17 @@ public class TCPClient extends JFrame {
         private String password;
         private Socket socket;
 
+        /**
+         * Konstruktor för FileTransferTask-klassen.
+         *
+         * @param serverAddress       Serveradressen dit filen ska skickas.
+         * @param serverPort          Porten som används för att kommunicera med servern.
+         * @param filePath            Sökvägen till den fil som ska skickas.
+         * @param logArea             JTextArea för att logga händelser.
+         * @param ffmpegCommand       FFmpeg-kommandot som ska användas för filbehandling.
+         * @param outputFileName      Namnet på den resulterande filen efter behandling.
+         * @param password            Lösenordet som används för autentisering.
+         */
         public FileTransferTask(String serverAddress, int serverPort, String filePath, JTextArea logArea, String ffmpegCommand, String outputFileName, String password) {
             this.serverAddress = serverAddress;
             this.serverPort = serverPort;
@@ -63,6 +93,9 @@ public class TCPClient extends JFrame {
             this.password = password;
         }
 
+        /**
+         * Metod som utför filöverföringen till servern.
+         */
         @Override
         public void run() {
             try {
@@ -92,6 +125,9 @@ public class TCPClient extends JFrame {
             }
         }
 
+        /**
+         * Metod för att stänga anslutningen till servern.
+         */
         public void close() {
             if (socket != null && !socket.isClosed()) {
                 try {
@@ -102,6 +138,9 @@ public class TCPClient extends JFrame {
             }
         }
 
+        /**
+         * Metod som appendar till textarean som visas i gui:n.
+         */
         private void log(String message) {
             if (logAreaReference != null) {
                 SwingUtilities.invokeLater(() -> {
@@ -111,6 +150,9 @@ public class TCPClient extends JFrame {
         }
     }
 
+    /**
+     * En inre klass som lyssnar på uppdateringar från servern.
+     */
     static class UpdateListener implements Runnable {
         private String serverAddress;
         private int updatePort;
@@ -118,12 +160,22 @@ public class TCPClient extends JFrame {
 
         private Socket updateSocket;
 
+        /**
+         * Konstruktor för UpdateListener-klassen.
+         *
+         * @param serverAddress       Serveradressen där uppdateringar ska lyssnas på.
+         * @param updatePort          Porten för att lyssna på uppdateringar från servern.
+         * @param logArea             JTextArea för att logga händelser.
+         */
         public UpdateListener(String serverAddress, int updatePort, JTextArea logArea) {
             this.serverAddress = serverAddress;
             this.updatePort = updatePort;
             this.logAreaReference = logArea;
         }
 
+        /**
+         * Metod som lyssnar på uppdateringar från servern.
+         */
         @Override
         public void run() {
             try {
@@ -143,6 +195,9 @@ public class TCPClient extends JFrame {
             }
         }
 
+        /**
+         * Metod för att stänga anslutningen för "uppdateringslyssning".
+         */
         public void close() {
             if (updateSocket != null && !updateSocket.isClosed()) {
                 try {
@@ -153,6 +208,9 @@ public class TCPClient extends JFrame {
             }
         }
 
+        /**
+         * Metod som appendar till textarean som visas i gui:n.
+         */
         private void log(String message) {
             if (logAreaReference != null) {
                 SwingUtilities.invokeLater(() -> {

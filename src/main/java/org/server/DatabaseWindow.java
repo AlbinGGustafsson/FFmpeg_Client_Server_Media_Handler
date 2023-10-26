@@ -7,6 +7,9 @@ import java.awt.*;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
+/**
+ * En klass som representerar ett fönster för att visa och hämta jobb från en databas.
+ */
 public class DatabaseWindow {
     private JFrame frame;
     private JButton getJobsButton;
@@ -14,6 +17,11 @@ public class DatabaseWindow {
     private JTextArea textArea;
     private SQliteManager manager;
 
+    /**
+     * Konstruktor för DatabaseWindow-klassen.
+     *
+     * @param sqliteManager SQliteManager-objektet som används för att hantera databasen.
+     */
     public DatabaseWindow(SQliteManager sqliteManager) {
         this.manager = sqliteManager;
 
@@ -53,6 +61,9 @@ public class DatabaseWindow {
         frame.add(scrollPane, BorderLayout.CENTER);
     }
 
+    /**
+     * Metod som visar fönstret för "databasen".
+     */
     public void show() {
         frame.setVisible(true);
     }

@@ -11,16 +11,29 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 
+/**
+ * En klass som hanterar kommunikation med en SQLite-databas.
+ * Inkluderar funktionalitet för krypterade lösenord.
+ */
 public class SQliteManager {
 
     private final String url = "jdbc:sqlite:ffmpegserverdb.db";
     private final String ENCRYPTION_KEY;
 
+    /**
+     * Initierar databasen.
+     *
+     * @param encryptionKey Krypteringsnyckeln som användsför lösenorden i databasen.
+     * @throws Exception Om det uppstår ett undantag vid initialiseringen av databasen.
+     */
     public SQliteManager(String encryptionKey) throws Exception {
         this.ENCRYPTION_KEY = encryptionKey;
         initDatabase();
     }
 
+    /**
+     * Skapar ett nytt table om det inte redan finns.
+     */
     private void initDatabase() throws SQLException {
         try (Connection conn = DriverManager.getConnection(url);
              Statement stmt = conn.createStatement()) {
@@ -31,6 +44,15 @@ public class SQliteManager {
         }
     }
 
+    /**
+     * Lägger till ett jobb i databasen.
+     *
+     * @param filename Filnamnet för jobbet.
+     * @param ip       IP-adressen för klienten som skickade jobbet.
+     * @param time     Tidpunkten då jobbet skapades.
+     * @param status   Statusen för jobbet.
+     * @throws SQLException Om det uppstår ett SQL-relaterat fel.
+     */
     public void addJob(String filename, String ip, String time, JobStatus status) throws SQLException {
         try (Connection conn = DriverManager.getConnection(url);
              PreparedStatement pstmt = conn.prepareStatement("INSERT INTO jobs(filename, ip, time, status) VALUES(?, ?, ?, ?)")) {
@@ -46,7 +68,14 @@ public class SQliteManager {
         return getJobs(null);
     }
 
-    // Get all jobs for a specific IP (or all jobs if IP is null)
+
+    /**
+     * Hämtar en lista med jobb från databasen baserat på en valfri IP-adress.
+     *
+     * @param ip IP-adressen för klienten (kan vara null för att hämta alla jobb).
+     * @return En lista med jobb som matchar filtreringen.
+     * @throws SQLException Om det uppstår ett SQL-relaterat fel.
+     */
     public List<String> getJobs(String ip) throws SQLException {
         List<String> jobs = new ArrayList<>();
 
@@ -71,12 +100,22 @@ public class SQliteManager {
         return jobs;
     }
 
+    /**
+     * Metod för att köra custom query:s mot databasen.
+     */
     public ResultSet executeCustomQuery(String query) throws SQLException {
-        Connection conn = DriverManager.getConnection(url);  // Don't close connection for a custom query
+        Connection conn = DriverManager.getConnection(url);
         Statement stmt = conn.createStatement();
         return stmt.executeQuery(query);
     }
 
+    /**
+     * Lägger till eller ersätter ett lösenord i databasen för en specifik IP-adress.
+     *
+     * @param ip       IP-adressen för klienten.
+     * @param password Lösenordet som ska läggas till eller uppdateras.
+     * @throws Exception Om det uppstår ett undantag vid kryptering eller databasoperationer.
+     */
     public void addClientPassword(String ip, String password) throws Exception {
         // Encrypt the password
         String encryptedPassword = encryptPassword(password);
@@ -89,6 +128,13 @@ public class SQliteManager {
         }
     }
 
+    /**
+     * Hämtar och returnerar lösenordet för en given IP-adress från databasen.
+     *
+     * @param ip IP-adressen för klienten vars lösenord ska hämtas.
+     * @return Det lagrade lösenordet om det finns, annars null.
+     * @throws SQLException Om det uppstår ett SQL-relaterat fel.
+     */
     private String getStoredPassword(String ip) throws SQLException {
         try (Connection conn = DriverManager.getConnection(url);
              PreparedStatement pstmt = conn.prepareStatement("SELECT password FROM clients WHERE ip = ?")) {
@@ -103,20 +149,26 @@ public class SQliteManager {
         }
     }
 
+    /**
+     * Verifierar om det angivna lösenordet matchar det lagrade lösenordet för en given IP-adress.
+     *
+     * @param ip IP-adressen för klienten vars lösenord ska verifieras.
+     * @param providedPassword Det angivna lösenordet som ska verifieras.
+     * @return true om lösenordet är korrekt, annars false.
+     */
     public boolean verifyClientPassword(String ip, String providedPassword) {
         try {
             String masterEncryptedPassword = getStoredPassword("master");
             String encryptedProvidedPassword = encryptPassword(providedPassword);
 
-            // Check against master password
+            // Kollar mot masterlösen
             if (masterEncryptedPassword != null && masterEncryptedPassword.equals(encryptedProvidedPassword)) {
                 return true;
             }
 
-            // If not master, check the password for the specific IP
+            // mot specifik ip
             String storedEncryptedPassword = getStoredPassword(ip);
             if (storedEncryptedPassword == null) {
-                // No password stored for this IP
                 return false;
             }
 
@@ -124,7 +176,6 @@ public class SQliteManager {
         } catch (SQLException | InvalidAlgorithmParameterException | NoSuchPaddingException |
                  IllegalBlockSizeException | NoSuchAlgorithmException | InvalidKeySpecException |
                  BadPaddingException | InvalidKeyException e) {
-
             e.printStackTrace();
             return false;
         }
@@ -133,8 +184,16 @@ public class SQliteManager {
     private static final byte[] SALT = {
             (byte) 0x21, (byte) 0x22, (byte) 0x23, (byte) 0x24,
             (byte) 0x25, (byte) 0x26, (byte) 0x27, (byte) 0x28
-    };  // Ideally, this should be generated and stored securely.
+    };
     private static final int ITERATION_COUNT = 65536;
+
+    /**
+     * Krypterar ett lösenord med hjälp av PBEWithMD5AndDES-algoritmen.
+     * Kastar massa roliga exceptions i olika lägen.
+     *
+     * @param password Lösenordet som ska krypteras.
+     * @return Det krypterade lösenordet som en Base64-kodad sträng.
+     */
     private String encryptPassword(String password) throws NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, InvalidAlgorithmParameterException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
         PBEKeySpec pbeKeySpec = new PBEKeySpec(ENCRYPTION_KEY.toCharArray(), SALT, ITERATION_COUNT);
         SecretKeyFactory secretKeyFactory = SecretKeyFactory.getInstance("PBEWithMD5AndDES");

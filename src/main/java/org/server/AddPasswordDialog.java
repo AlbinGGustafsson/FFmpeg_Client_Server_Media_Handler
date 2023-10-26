@@ -3,6 +3,9 @@ package org.server;
 import javax.swing.*;
 import java.awt.*;
 
+/**
+ * En dialogrutaklass som används för att lägga till ett lösenord till en ip-adress.
+ */
 public class AddPasswordDialog {
 
     private JDialog passwordDialog;
@@ -10,6 +13,11 @@ public class AddPasswordDialog {
     private JPasswordField passwordField;
     private boolean isConfirmed = false;
 
+    /**
+     * Konstruktor för AddPasswordDialog-klassen.
+     *
+     * @param parent parent fönstret till dialogen.
+     */
     public AddPasswordDialog(JFrame parent) {
         passwordDialog = new JDialog(parent, "Add Password", true);
         passwordDialog.setSize(300, 150);
@@ -41,18 +49,36 @@ public class AddPasswordDialog {
         passwordDialog.add(cancelButton);
     }
 
+    /**
+     * Metod som visar dialogrutan.
+     */
     public void display() {
         passwordDialog.setVisible(true);
     }
 
+    /**
+     * Metod som returnerar true om användaren har bekräftat dialogrutan, annars false.
+     *
+     * @return true om användaren har bekräftat dialogrutan, annars false.
+     */
     public boolean isConfirmed() {
         return isConfirmed;
     }
 
+    /**
+     * Metod som returnerar den angivna IP-adressen.
+     *
+     * @return IP-adressen som angivits av användaren.
+     */
     public String getIpAddress() {
         return ipField.getText();
     }
 
+    /**
+     * Metod som returnerar det angivna lösenordet.
+     *
+     * @return Lösenordet som angivits av användaren.
+     */
     public String getPassword() {
         return new String(passwordField.getPassword());
     }

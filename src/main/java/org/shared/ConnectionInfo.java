@@ -2,11 +2,20 @@ package org.shared;
 
 import java.util.Objects;
 
+/**
+ * Klass som representerar information om en klientanslutning, inklusive IP-adress och filnamn.
+ */
 public class ConnectionInfo {
 
     private String ip;
     private String fileName;
 
+    /**
+     * Konstruktor för ConnectionInfo-klassen.
+     *
+     * @param ip       IP-adressen för klienten.
+     * @param fileName Filnamnet associerat med anslutningen.
+     */
     public ConnectionInfo(String ip, String fileName) {
         this.ip = ip;
         this.fileName = fileName;
@@ -25,6 +34,13 @@ public class ConnectionInfo {
         return ip + " " + fileName;
     }
 
+    /**
+     * Metod för att jämföra två ConnectionInfo-objekt och avgöra om de är lika.
+     * Lika om ip och filename är lika.
+     *
+     * @param o Det objekt som ska jämföras med detta objekt.
+     * @return true om objekten är lika, annars false.
+     */
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

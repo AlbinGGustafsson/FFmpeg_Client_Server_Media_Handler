@@ -5,7 +5,10 @@ import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 
-public class TCPClientGUI {
+/**
+ * Klass som hanterar grafiskt användargränssnitt (GUI) för klienten.
+ */
+public class ClientGUI {
 
     private JFrame frame;
     private JTextField serverAddressField;
@@ -19,10 +22,13 @@ public class TCPClientGUI {
 
     private String filePath;
 
-    public TCPClientGUI() {
+    /**
+     * Konstruktor för ClientGUI-klassen som skapar och konfigurerar det grafiska användargränssnittet.
+     */
+    public ClientGUI() {
 
         frame = new JFrame("TCP Client");
-        frame.setSize(800, 300); // Increased size a bit for better layout
+        frame.setSize(800, 300);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         JPanel panel = new JPanel();
@@ -47,7 +53,7 @@ public class TCPClientGUI {
         panel.add(new JLabel("FFmpeg Command: (%s for input and output)"));
 
         //Todo Här ser man att %s är en del av commandot för input och output..... Går nog att hitta en snyggare lösning
-        ffmpegCommandField = new JTextField("ffmpeg -i %s -c:v libx264 -b:v 2000k -c:a aac -b:a 128k %s"); // Increased the columns to provide more visible space
+        ffmpegCommandField = new JTextField("ffmpeg -i %s -c:v libx264 -b:v 2000k -c:a aac -b:a 128k %s");
         panel.add(ffmpegCommandField);
 
         panel.add(new JLabel("Output filename (will include identifier)"));
@@ -71,7 +77,7 @@ public class TCPClientGUI {
                 filePath = fileChooser.getSelectedFile().getAbsolutePath();
                 filePathLabel.setText(fileChooser.getSelectedFile().getName());
                 customOutputFileName.setText(fileChooser.getSelectedFile().getName());
-                startButton.setEnabled(true); // Enable the button when a file is chosen
+                startButton.setEnabled(true);
             }
         });
 
@@ -87,6 +93,9 @@ public class TCPClientGUI {
     }
 
 
+    /**
+     * Metod för att starta en klient och initiera kommunikationen med servern.
+     */
     private void startTCPClient() {
         String serverAddress = serverAddressField.getText();
         int serverPort = Integer.parseInt(serverPortField.getText());
@@ -96,13 +105,13 @@ public class TCPClientGUI {
         String password = passwordField.getText();
 
         try {
-            new TCPClient(serverAddress, serverPort, updatePort, filePath, ffmpegCommand, outputFileName, password);
+            new Client(serverAddress, serverPort, updatePort, filePath, ffmpegCommand, outputFileName, password);
         } catch (IOException e) {
             JOptionPane.showMessageDialog(frame, "Error starting TCP Client: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new TCPClientGUI());
+        SwingUtilities.invokeLater(() -> new ClientGUI());
     }
 }

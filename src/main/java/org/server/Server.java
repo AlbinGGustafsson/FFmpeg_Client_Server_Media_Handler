@@ -14,8 +14,10 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class TCPServer {
-
+/**
+ * Klass som representerar en server för att hantera filöverföring och filhantering via ffmpeg.
+ */
+public class Server {
     private static final String CACHE_DIR = "cachedFiles";
 
     private final ExecutorService executor;
@@ -24,12 +26,25 @@ public class TCPServer {
 
     private SQliteManager dbManager;
 
-    public TCPServer(ServerGUI gui, SQliteManager dbManager) {
+    /**
+     * Konstruktor för Server-klassen.
+     *
+     * @param gui       Serverns grafiska användargränssnitt.
+     * @param dbManager SQliteManager-objekt som används för att hantera databasen.
+     */
+    public Server(ServerGUI gui, SQliteManager dbManager) {
         this.gui = gui;
         this.dbManager = dbManager;
         this.executor = Executors.newCachedThreadPool();
     }
 
+    /**
+     * Metod för att starta servern.
+     *
+     * @param filePort   Port för filöverföring.
+     * @param updatePort Port för uppdateringar.
+     * @throws IOException Kastas om det uppstår ett IO-fel.
+     */
     public void start(int filePort, int updatePort) throws IOException {
         try (ServerSocket serverSocket = new ServerSocket(filePort);
              ServerSocket updateServerSocket = new ServerSocket(updatePort)) {
@@ -47,6 +62,9 @@ public class TCPServer {
         }
     }
 
+    /**
+     * Inre klass som representerar en tråd för att hantera klienter.
+     */
     private class ClientHandler implements Runnable {
         private final Socket clientSocket;
         private final UpdateServerThread updateServerThread;
@@ -63,6 +81,15 @@ public class TCPServer {
             handleClient(clientSocket, updateServerThread, gui);
         }
 
+        /**
+         * Metod för att hantera en klientanslutning.
+         * Tar emot och kontrollerar lösenord, tar emot och hanterar mediafiler, skickar tillbaka den nya mediafilen.
+         * Den ser även till att städa upp ffmpeg processen och temporära filer om något går fel eller om allt är klart.
+         *
+         * @param clientSocket       Klientens socket.
+         * @param updateServerThread Uppdateringstråden för att skicka meddelanden till klienten.
+         * @param gui                Serverns grafiska användargränssnitt.
+         */
         private void handleClient(Socket clientSocket, UpdateServerThread updateServerThread, ServerGUI gui) {
             String receivedPath = "";
             String outputFileName = "";
@@ -72,15 +99,13 @@ public class TCPServer {
             try (ObjectInputStream in = new ObjectInputStream(clientSocket.getInputStream());
                  ObjectOutputStream out = new ObjectOutputStream(clientSocket.getOutputStream())) {
 
-
                 System.out.println("Client connected");
 
-                // First, read the password
                 String password = (String) in.readObject();
 
                 String ipAdress = clientSocket.getInetAddress().getHostAddress();
 
-                if (!dbManager.verifyClientPassword(ipAdress, password)){
+                if (!dbManager.verifyClientPassword(ipAdress, password)) {
                     updateServerThread.sendMessage("Incorrect password");
                     return;
                 }
@@ -103,7 +128,6 @@ public class TCPServer {
                 //Lägger till jobbet i databasen
                 dbManager.addJob(uniqueFileName, ipAdress, LocalDateTime.now().toString(), JobStatus.STARTED);
 
-                // Ensure the directory exists before writing
                 ensureDirectoryExists();
 
                 receivedPath = CACHE_DIR + "/" + receivedFileName;
@@ -136,7 +160,6 @@ public class TCPServer {
             } catch (SQLException e) {
                 System.err.println("Could not write to database");
             } finally {
-                // Delete the received and processed files
                 try {
                     Files.deleteIfExists(Paths.get(receivedPath));
                     Files.deleteIfExists(Paths.get(outputFileName));
@@ -148,6 +171,11 @@ public class TCPServer {
             }
         }
 
+        /**
+         * Metod för att generera en unik identifierare.
+         *
+         * @return En unik identifierare.
+         */
         private String generateUniqueIdentifier() {
             String CHARACTERS = "0123456789abcdefghijklmnopqrstuvwxyz";
             final int IDENTIFIER_LENGTH = 4;
@@ -158,6 +186,9 @@ public class TCPServer {
             return identifier.toString();
         }
 
+        /**
+         * Metod för att säkerställa att en katalog existerar.
+         */
         private void ensureDirectoryExists() {
             Path path = Paths.get(CACHE_DIR);
             if (Files.notExists(path)) {
@@ -169,7 +200,16 @@ public class TCPServer {
             }
         }
 
-
+        /**
+         * Metod för att utföra FFmpeg-kommandot.
+         *
+         * @param inputFileName    Filnamnet på input-filen.
+         * @param outputFileName   Filnamnet på output-filen.
+         * @param updateThread     Uppdateringstråden för att skicka meddelanden till klienten.
+         * @param ffmpegCommand    FFmpeg-kommandot som ska utföras.
+         * @param gui              Serverns grafiska användargränssnitt.
+         * @return Processobjektet som representerar FFmpeg-processen.
+         */
         private Process executeFFmpegCommand(
                 String inputFileName,
                 String outputFileName,
@@ -199,7 +239,7 @@ public class TCPServer {
                         while ((s = stdInput.readLine()) != null) {
                             if (!updateThread.sendMessage(s)) {
                                 if (process.isAlive()) {
-                                    process.destroy();  // Terminate the FFmpeg process
+                                    process.destroy();
                                 }
                             }
                         }
@@ -216,7 +256,7 @@ public class TCPServer {
                         while ((s = stdError.readLine()) != null) {
                             if (!updateThread.sendMessage(s)) {
                                 if (process.isAlive()) {
-                                    process.destroy();  // Terminate the FFmpeg process
+                                    process.destroy();
                                 }
                             }
                         }
@@ -236,6 +276,9 @@ public class TCPServer {
         }
     }
 
+    /**
+     * Inre klass som representerar en tråd för att hantera uppdateringar till klienten.
+     */
     public static class UpdateServerThread implements Runnable {
         private final Socket updateSocket;
         private PrintWriter updateOut;
@@ -244,13 +287,15 @@ public class TCPServer {
             this.updateSocket = updateSocket;
         }
 
+        /**
+         * Innehåller en loop som håller tråden vid liv.
+         */
         @Override
         public void run() {
             try {
                 updateOut = new PrintWriter(updateSocket.getOutputStream(), true);
                 System.out.println("Update client connected");
                 while (true) {
-                    // Waiting for sendMessage to be called
                     Thread.sleep(1000);
                 }
             } catch (IOException | InterruptedException e) {
@@ -258,6 +303,12 @@ public class TCPServer {
             }
         }
 
+        /**
+         * Metod som skickar ett meddelande till klienten.
+         *
+         * @param message Meddelandet att skicka.
+         * @return true om meddelandet skickades framgångsrikt, annars false.
+         */
         public boolean sendMessage(String message) {
             if (updateOut == null) {
                 System.err.println("Client not connected, cannot send message");

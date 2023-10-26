@@ -13,6 +13,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 
+/**
+ * Klass som representerar den grafiska användargränssnittet för servern.
+ */
+
 public class ServerGUI extends JFrame {
 
     private static SQliteManager manager;
@@ -25,6 +29,10 @@ public class ServerGUI extends JFrame {
 
     private ArrayList<Process> processes;
 
+    /**
+     * Konstruktor för ServerGUI-klassen.
+     * Sätter upp gränsnsittet.
+     */
     public ServerGUI() {
 
         processes = new ArrayList<>();
@@ -98,14 +106,29 @@ public class ServerGUI extends JFrame {
         setVisible(true);
     }
 
+    /**
+     * Metod för att lägga till en process i en samling med processer.
+     * Ifall servern stängs ner så finns alla processer den skapat i denna samling.
+     * Då kan det städas upp.
+     *
+     * @param process Den aktiva processen att lägga till.
+     */
     public void addProcess(Process process){
         processes.add(process);
     }
 
+    /**
+     * Metod för att ta bort en process från processsamlingen.
+     *
+     * @param process Den aktiva processen att ta bort.
+     */
     public void removeProcess(Process process){
         processes.remove(process);
     }
 
+    /**
+     * Metod för att rensa upp och avsluta aktiva processer.
+     */
     private void cleanUp() {
         System.out.println(processes.size() + " active processes");
         for (Process process : processes) {
@@ -115,7 +138,9 @@ public class ServerGUI extends JFrame {
         }
     }
 
-
+    /**
+     * Metod för att rensa cachelagrade filer.
+     */
     private void cleanCacheFiles(){
         File cacheDir = new File("cachedFiles");
         if (cacheDir.exists() && cacheDir.isDirectory()) {
@@ -130,7 +155,12 @@ public class ServerGUI extends JFrame {
         }
     }
 
+    /**
+     * Inre klass som representerar en "action" för att starta servern.
+     * Egen klass på grund av dess komplexitet.
+     */
     private class StartServerAction implements ActionListener {
+
         @Override
         public void actionPerformed(ActionEvent e) {
             String ffmpegVersion = getFFmpegVersion();
@@ -144,11 +174,10 @@ public class ServerGUI extends JFrame {
             int filePort = Integer.parseInt(filePortField.getText());
             int updatePort = Integer.parseInt(updatePortField.getText());
 
-            // Start the server in a new thread to keep the GUI responsive
             new Thread(() -> {
                 try {
                     logMessage("Server started on file port " + filePort + " and update port " + updatePort);
-                    TCPServer server = new TCPServer(ServerGUI.this, manager);
+                    Server server = new Server(ServerGUI.this, manager);
                     server.start(filePort, updatePort);
                 } catch (IOException ex) {
                     logMessage("Failed to start server: " + ex.getMessage());
@@ -157,38 +186,66 @@ public class ServerGUI extends JFrame {
             }).start();
         }
 
+        /**
+         * Metod för att hämta en FFmpeg-version om den kan hittas på datorn.
+         *
+         * @return FFmpeg-versionen eller null om FFmpeg inte är installerat.
+         */
         private String getFFmpegVersion() {
             try {
                 Process process = Runtime.getRuntime().exec("ffmpeg -version");
                 BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-                String firstLine = reader.readLine(); // The first line of the output usually contains the version info.
+                String firstLine = reader.readLine();
                 process.waitFor();
 
                 if (process.exitValue() == 0 && firstLine != null) {
-                    return firstLine.split(" ")[2]; // Split by space and get the third item, which is typically the version.
+                    return firstLine.split(" ")[2];
                 }
             } catch (Exception e) {
-                // Handle any exception that may arise during the execution.
+                //Här skulle jag kunna hantera en exception
             }
             return null;
         }
     }
 
+    /**
+     * Metod för att lägga till en anslutning i listan över anslutningar (visas i gui:t).
+     *
+     * @param connectionInfo Informationen om anslutningen som ska läggas till.
+     */
     public void addConnection(ConnectionInfo connectionInfo) {
         listModel.addElement(connectionInfo);
         logMessage(connectionInfo + " Started!");
     }
 
+    /**
+     * Metod för att ta bort en anslutning från listan över anslutningar. (tas bort från gui:t)
+     *
+     * @param connectionInfo Informationen om anslutningen som ska tas bort.
+     * @param message        Meddelandet som ska visas i loggrutan.
+     */
     public void removeConnection(ConnectionInfo connectionInfo, String message) {
         if (listModel.removeElement(connectionInfo)){
             logMessage(connectionInfo + message);
         }
     }
 
+    /**
+     * Metod för att logga ett meddelande i loggrutan på gränssnittet.
+     *
+     * @param message Meddelandet att logga.
+     */
     public void logMessage(String message) {
         SwingUtilities.invokeLater(() -> logArea.append(message + "\n"));
     }
 
+    /**
+     * Metod för att starta serverapplikationen.
+     * Argumentet som programmet tar emot är en encryption key för databasens krypterade lösenord.
+     *
+     * @param args Argumenten som tillhandahålls vid körning av programmet.
+     * @throws Exception Om det uppstår ett undantag.
+     */
     public static void main(String[] args) throws Exception {
 
         if(args.length < 1) {

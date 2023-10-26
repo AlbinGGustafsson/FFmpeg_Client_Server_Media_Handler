@@ -36,7 +36,7 @@ public class ServerGUI extends JFrame {
 
         // Set up the frame
         setTitle("TCP Server");
-        setSize(600, 300);
+        setSize(800, 300);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);  // Center the frame
 
@@ -48,7 +48,27 @@ public class ServerGUI extends JFrame {
         connectionList = new JList<>(listModel);
         logArea = new JTextArea();
         logArea.setEditable(false);  // Make the log area uneditable
-        JButton cleanCacheButton = new JButton("Clean Cache Files");
+        JButton cleanCacheButton = new JButton("Clean Cache");
+        JButton addPasswordButton = new JButton("Add Password");
+        JButton databaseButton = new JButton("Database");
+
+
+        addPasswordButton.addActionListener(e -> {
+
+            AddPasswordDialog dialog = new AddPasswordDialog(this); // Replace 'yourMainFrameInstance' with the instance of your JFrame
+            dialog.display();
+            if (dialog.isConfirmed()) {
+                String ip = dialog.getIpAddress();
+                String password = dialog.getPassword();
+                logMessage("Password added!");
+                try {
+                    manager.addClientPassword(ip, password);
+                } catch (Exception ex) {
+                    logMessage("Could not add password");
+                }
+            }
+
+        });
 
 
         cleanCacheButton.addActionListener(e -> cleanCacheFiles());
@@ -56,6 +76,8 @@ public class ServerGUI extends JFrame {
         // Set up the layout
         setLayout(new BorderLayout());
         JPanel topPanel = new JPanel();
+        topPanel.add(databaseButton);
+        topPanel.add(addPasswordButton);
         topPanel.add(cleanCacheButton);
         topPanel.add(new JLabel("File Port:"));
         topPanel.add(filePortField);

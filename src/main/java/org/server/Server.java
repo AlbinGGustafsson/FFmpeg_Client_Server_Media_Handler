@@ -145,7 +145,7 @@ public class Server {
                 out.writeObject(processedFileWrapper);
                 System.out.println("Processed file sent back to client.");
 
-                gui.removeConnection(connectionInfo, "Finished");
+                gui.removeConnection(connectionInfo, " Finished");
                 dbManager.addJob(uniqueFileName, ipAdress, LocalDateTime.now().toString(), JobStatus.FINISHED);
 
             } catch (ClassNotFoundException | IOException e) {

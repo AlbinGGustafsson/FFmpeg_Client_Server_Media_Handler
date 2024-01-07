@@ -27,7 +27,7 @@ public class ClientGUI {
      */
     public ClientGUI() {
 
-        frame = new JFrame("TCP Client");
+        frame = new JFrame("FFmpeg Client");
         frame.setSize(800, 300);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 

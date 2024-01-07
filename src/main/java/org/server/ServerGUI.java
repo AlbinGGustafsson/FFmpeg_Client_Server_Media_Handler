@@ -43,7 +43,7 @@ public class ServerGUI extends JFrame {
 
 
         // Set up the frame
-        setTitle("TCP Server");
+        setTitle("FFmpeg Server");
         setSize(800, 300);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);  // Center the frame
